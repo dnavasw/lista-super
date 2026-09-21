@@ -72,8 +72,8 @@ h1{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,6vw,40px
 .chk{appearance:none;width:22px;height:22px;margin:2px 0 0;border:1.5px solid var(--line-2);border-radius:6px;background:var(--panel);display:grid;place-items:center;flex:none}
 .chk:checked{background:var(--accent);border-color:var(--accent)}
 .chk:checked::after{content:"";width:6px;height:11px;border:solid var(--accent-ink);border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
-.row{grid-template-columns:28px auto 1fr auto}
-.row.noimg{grid-template-columns:28px 1fr auto}
+.row{grid-template-columns:28px auto auto 1fr auto}
+.row.noimg{grid-template-columns:28px auto 1fr auto}
 .thumb{width:44px;height:44px;border-radius:7px;object-fit:cover;background:var(--chip);border:1px solid var(--line);flex:none}
 .name{min-width:0}
 .group h2 .cad{font-family:var(--font-mono);font-weight:400;font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-left:auto}
@@ -84,7 +84,8 @@ h1{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,6vw,40px
 .badge.unseen{background:var(--chip);color:var(--ink-3);border:1px dashed var(--line-2)}
 .row.unseen .title{color:var(--ink-2)}
 .row.qtymode .qty{display:inline-flex}
-.row.qtymode.off .qty{opacity:.55}
+.row.qtymode.off .qty{opacity:.55;border-color:var(--line-2)}
+.row.qtymode.off .qty button{color:var(--ink-3)}
 .note{font-size:12px;color:var(--ink-2);background:var(--panel);border:1px dashed var(--line-2);border-radius:8px;padding:8px 10px;margin:-2px 0 8px}
 .group h2 .act{border:1px solid var(--line-2);background:var(--panel);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--ink-2);margin-left:auto}
 .modebar{display:flex;align-items:center;gap:8px;margin-top:10px}
@@ -105,10 +106,14 @@ body.simple .stats, body.simple .price, body.simple .per, body.simple .badge.che
 .badge.up{background:var(--bad-soft);color:var(--bad)}
 .badge.due{background:var(--warn-soft);color:var(--warn)}
 .side{display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
-.qty{display:none;align-items:center;gap:2px;border:1px solid var(--line-2);border-radius:6px;background:var(--panel)}
+.qty{display:none;align-items:center;gap:0;border:1.5px solid var(--accent);border-radius:8px;background:var(--panel);height:26px;margin-top:0;overflow:hidden}
 .row.on .qty{display:inline-flex}
-.qty button{border:0;background:transparent;width:26px;height:26px;font-size:15px;line-height:1;color:var(--ink-2)}
-.qty output{min-width:20px;text-align:center;font-family:var(--font-mono);font-size:13px;color:var(--ink)}
+.qtyslot{display:flex;align-items:center;min-width:0}
+.row:not(.on):not(.qtymode) .qtyslot{width:0}
+.qty button{border:0;background:transparent;width:28px;height:26px;font-size:17px;line-height:1;color:var(--accent);font-weight:600}
+.qty button:active{background:var(--accent-soft)}
+.qty output{min-width:22px;text-align:center;font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--ink);padding:0 2px}
+.qty .size{padding-right:6px;font-size:11px}
 .empty{padding:24px 12px;text-align:center;color:var(--ink-3);font-size:14px}
 
 /* ---------- compare ---------- */
@@ -188,7 +193,7 @@ body.simple .stats, body.simple .price, body.simple .per, body.simple .badge.che
 <div class="bottom">
   <div class="in">
     <div class="sum"><span id="sumLabel">Nada marcado todavía</span><b id="sumTotal"></b></div>
-    <button class="btn ghost" id="clearBtn" type="button">Limpiar</button>
+    <button class="btn" id="clearBtn" type="button">Borrar lista</button>
     <button class="btn primary" id="shareBtn" type="button">Lista para WhatsApp</button>
   </div>
 </div>
@@ -201,6 +206,7 @@ body.simple .stats, body.simple .price, body.simple .per, body.simple .badge.che
     <div class="acts">
       <button class="btn primary" id="copyBtn" type="button">Copiar</button>
       <a class="btn" id="waLink" href="#" target="_blank" rel="noopener">Abrir WhatsApp</a>
+      <button class="btn ghost" id="sentBtn" type="button">Ya la mandé · borrar lista</button>
       <button class="btn ghost" id="closeSheet" type="button">Cerrar</button>
     </div>
   </div>
@@ -333,6 +339,7 @@ function rowHTML(i){
   const qtyLabel = i.qtyMode && i.unit ? ` <span class="size">${i.unit}</span>` : '';
   return `<div class="row ${on?'on':''} ${i.img?'':'noimg'} ${i.qtyMode?'qtymode':''} ${i.qtyMode&&!on?'off':''} ${i.unseen?'unseen':''}" data-id="${i.id}">
     <input class="chk" type="checkbox" id="c-${i.id}" ${on?'checked':''} aria-label="Falta: ${name}">
+    <span class="qtyslot"><span class="qty"><button type="button" data-d="-1" aria-label="menos">−</button><output>${qty}</output><button type="button" data-d="1" aria-label="más">+</button>${qtyLabel}</span></span>
     ${i.img?`<img class="thumb" src="${i.img}" alt="" loading="lazy">`:''}
     <label class="name" for="c-${i.id}">
       ${brand?`<div class="brand">${brand}</div>`:''}
@@ -341,7 +348,6 @@ function rowHTML(i){
     </label>
     <div class="side">
       ${i.orders?`<span>${i.orders}× · ${i.daysSince!=null?(i.daysSince<45?i.daysSince+' d':Math.round(i.daysSince/30)+' m'):''}</span>`:''}
-      <span class="qty"><button type="button" data-d="-1" aria-label="menos">−</button><output>${qty}</output><button type="button" data-d="1" aria-label="más">+</button>${qtyLabel}</span>
     </div>
   </div>`;
 }
@@ -419,7 +425,7 @@ document.getElementById('main').addEventListener('click', e => {
   const cur = state.checked[id] != null ? state.checked[id] : (it && it.avgQty) || 1;
   let v = Math.round((cur + Number(b.dataset.d) * step) * 2) / 2;
   if (it && it.qtyMode){ if (v <= 0){ delete state.checked[id]; row.classList.remove('on'); row.classList.add('off'); row.querySelector('.chk').checked = false; row.querySelector('output').textContent = it.avgQty; save(); renderTabs(); renderSum(); return; } state.checked[id] = v; row.classList.add('on'); row.classList.remove('off'); row.querySelector('.chk').checked = true; }
-  else { v = Math.max(1, v); state.checked[id] = v; }
+  else { if (v <= 0){ delete state.checked[id]; row.classList.remove('on'); row.querySelector('.chk').checked = false; row.querySelector('output').textContent = 1; save(); renderTabs(); renderSum(); return; } state.checked[id] = v; }
   save(); row.querySelector('output').textContent = v; renderTabs(); renderSum();
 });
 document.getElementById('addBtn').addEventListener('click', addCustom);
@@ -431,10 +437,15 @@ function addCustom(){
   state.checked[id] = 1; save(); inp.value = ''; q = ''; document.getElementById('q').value = ''; tab = 'marcados'; render();
   toast('Agregado a la lista');
 }
-document.getElementById('clearBtn').addEventListener('click', () => {
-  if (!Object.keys(state.checked).length) return;
-  state.checked = {}; state.custom = []; save(); render(); toast('Lista limpia');
-});
+const sheet = document.getElementById('sheet');
+function clearList(silent){
+  const n = Object.keys(state.checked).length;
+  if (!n){ toast('La lista ya está vacía'); return; }
+  if (!silent && !confirm(`¿Borrar la lista? (${n} producto${n>1?'s':''} marcado${n>1?'s':''})`)) return;
+  state.checked = {}; state.custom = []; save(); render(); toast('Lista borrada');
+}
+document.getElementById('clearBtn').addEventListener('click', () => clearList(false));
+document.getElementById('sentBtn').addEventListener('click', () => { sheet.classList.remove('open'); clearList(true); });
 
 function renderSum(){
   const ids = Object.keys(state.checked); const label = document.getElementById('sumLabel'), tot = document.getElementById('sumTotal');
@@ -525,7 +536,6 @@ function buildText(){
   notes.forEach(n => lines.push(`· ${n}`));
   return lines.join('\n').trim();
 }
-const sheet = document.getElementById('sheet');
 document.getElementById('shareBtn').addEventListener('click', () => {
   const t = buildText(); if (!t){ toast('Primero palomea lo que falta'); return; }
   document.getElementById('sheetText').textContent = t;
